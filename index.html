@@ -51,7 +51,7 @@
             get(studentRef).then((snapshot) => {
                 if (snapshot.exists()) {
                     const studentData = snapshot.val();
-                    alert("學號 " + studentData.studentID + " 已儲存！");
+                    alert("學號 " + studentData.studentID + " 已儲存過！");
                 } else {
                     alert("找不到此學號的資料！");
                 }
