@@ -58,6 +58,7 @@
             });
             console.log("注册成功");
           }
+          // 转换最后登录时间为本地时间并显示
           displayUserInfo({ displayName, email, photoURL, lastLoginTime });
         });
       } catch (error) {
@@ -65,14 +66,16 @@
       }
     }
 
-    // 显示用户信息
+    // 显示用户信息，格式化最后登录时间为本地时间
     function displayUserInfo(userInfo) {
       const { displayName, email, photoURL, lastLoginTime } = userInfo;
+      const localLastLoginTime = new Date(lastLoginTime).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
+
       document.getElementById("user-info").innerHTML = `
         <p>姓名: ${displayName}</p>
         <p>Email: ${email}</p>
         <img src="${photoURL}" alt="Profile Picture" width="100"/>
-        <p>最后登录时间: ${lastLoginTime}</p>
+        <p>最后登录时间（本地时间）: ${localLastLoginTime}</p>
       `;
     }
 
