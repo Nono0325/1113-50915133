@@ -37,19 +37,20 @@
         const user = result.user;
         const uid = user.uid;
         const { displayName, email, photoURL } = user;
-        const lastLoginTime = new Date().toISOString();
 
+        // 检查用户是否已存在
         const userRef = ref(database, 'users/' + uid);
         onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
             alert("用户已注册！");
           } else {
-            // 存储新用户信息
+            // 存储新用户信息，并设置注册时间为当前时间
+            const lastLoginTime = new Date().toISOString();  // 当前时间作为注册时间
             set(userRef, {
               displayName,
               email,
               photoURL,
-              lastLoginTime
+              lastLoginTime  // 记录注册时的时间
             });
             displayUserInfo({ displayName, email, photoURL, lastLoginTime });
             alert("注册成功！");
@@ -67,16 +68,25 @@
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         const uid = user.uid;
-        const lastLoginTime = new Date().toISOString();
 
-        // 检查用户是否已存在
+        // 获取用户信息
         const userRef = ref(database, 'users/' + uid);
         onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
-            // 更新最后登录时间
-            update(userRef, { lastLoginTime });
-            const { displayName, email, photoURL } = snapshot.val();
-            displayUserInfo({ displayName, email, photoURL, lastLoginTime });
+            const { displayName, email, photoURL, lastLoginTime } = snapshot.val();
+            const newLastLoginTime = new Date().toISOString();  // 更新为当前登录时间
+
+            // 更新数据库中的最后登录时间
+            update(userRef, { lastLoginTime: newLastLoginTime });
+
+            // 显示用户信息并格式化显示上次登录时间
+            displayUserInfo({
+              displayName,
+              email,
+              photoURL,
+              lastLoginTime: lastLoginTime,  // 显示的是上次的登录时间
+              newLastLoginTime: newLastLoginTime
+            });
           } else {
             alert("用户未注册，请先注册！");
           }
@@ -88,14 +98,18 @@
 
     // 显示用户信息
     function displayUserInfo(userInfo) {
-      const { displayName, email, photoURL, lastLoginTime } = userInfo;
+      const { displayName, email, photoURL, lastLoginTime, newLastLoginTime } = userInfo;
+
+      // 格式化显示上次登录时间（UTC转为本地时间）
       const localLastLoginTime = new Date(lastLoginTime).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
+      const localNewLastLoginTime = new Date(newLastLoginTime).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
 
       document.getElementById("user-info").innerHTML = `
         <p>姓名: ${displayName}</p>
         <p>Email: ${email}</p>
         <img src="${photoURL}" alt="Profile Picture" width="100"/>
-        <p>最后登录时间（本地时间）: ${localLastLoginTime}</p>
+        <p>上次登录时间（本地时间）: ${localLastLoginTime}</p>
+        <p>当前登录时间（本地时间）: ${localNewLastLoginTime}</p>
       `;
     }
 
