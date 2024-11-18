@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Google 登录/注册系统</title>
+  <title>Firebase Google 登入/註冊系統</title>
   <script type="module">
-    // 导入 Firebase 函数
+    // 匯入 Firebase 函數
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
@@ -29,7 +29,7 @@
     const auth = getAuth(app);
     const database = getDatabase(app);
 
-    // Google 注册功能
+    // Google 註冊功能
     async function googleRegister() {
       const provider = new GoogleAuthProvider();
       try {
@@ -38,30 +38,30 @@
         const uid = user.uid;
         const { displayName, email, photoURL } = user;
 
-        // 检查用户是否已存在
+        // 檢查使用者是否已存在
         const userRef = ref(database, 'users/' + uid);
         onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
-            alert("用户已注册！");
+            alert("使用者已註冊！");
           } else {
-            // 存储新用户信息，并设置注册时间为当前时间
-            const lastLoginTime = new Date().toISOString();  // 当前时间作为注册时间
+            // 存儲新使用者資訊，並將註冊時間設置為當前時間
+            const lastLoginTime = new Date().toISOString();  // 註冊時的時間
             set(userRef, {
               displayName,
               email,
               photoURL,
-              lastLoginTime  // 记录注册时的时间
+              lastLoginTime  // 記錄註冊時的時間
             });
             displayUserInfo({ displayName, email, photoURL, lastLoginTime });
-            alert("注册成功！");
+            alert("註冊成功！");
           }
         });
       } catch (error) {
-        console.error("注册失败:", error);
+        console.error("註冊失敗:", error);
       }
     }
 
-    // Google 登录功能
+    // Google 登入功能
     async function googleLogin() {
       const provider = new GoogleAuthProvider();
       try {
@@ -69,51 +69,51 @@
         const user = result.user;
         const uid = user.uid;
 
-        // 获取用户信息
+        // 獲取使用者資訊
         const userRef = ref(database, 'users/' + uid);
         onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
             const { displayName, email, photoURL, lastLoginTime } = snapshot.val();
-            const newLastLoginTime = new Date().toISOString();  // 更新为当前登录时间
+            const newLastLoginTime = new Date().toISOString();  // 更新為當前登入時間
 
-            // 更新数据库中的最后登录时间
+            // 更新資料庫中的最後登入時間
             update(userRef, { lastLoginTime: newLastLoginTime });
 
-            // 显示用户信息并格式化显示上次登录时间
+            // 顯示使用者資訊並格式化顯示上次登入時間
             displayUserInfo({
               displayName,
               email,
               photoURL,
-              lastLoginTime: lastLoginTime,  // 显示的是上次的登录时间
+              lastLoginTime: lastLoginTime,  // 顯示的是上次的登入時間
               newLastLoginTime: newLastLoginTime
             });
           } else {
-            alert("用户未注册，请先注册！");
+            alert("使用者未註冊，請先註冊！");
           }
         });
       } catch (error) {
-        console.error("登录失败:", error);
+        console.error("登入失敗:", error);
       }
     }
 
-    // 显示用户信息
+    // 顯示使用者資訊
     function displayUserInfo(userInfo) {
       const { displayName, email, photoURL, lastLoginTime, newLastLoginTime } = userInfo;
 
-      // 格式化显示上次登录时间（UTC转为本地时间）
-      const localLastLoginTime = new Date(lastLoginTime).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
-      const localNewLastLoginTime = new Date(newLastLoginTime).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
+      // 格式化顯示上次登入時間（UTC轉為本地時間）
+      const localLastLoginTime = new Date(lastLoginTime).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" });
+      const localNewLastLoginTime = new Date(newLastLoginTime).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" });
 
       document.getElementById("user-info").innerHTML = `
         <p>姓名: ${displayName}</p>
         <p>Email: ${email}</p>
         <img src="${photoURL}" alt="Profile Picture" width="100"/>
-        <p>上次登录时间（本地时间）: ${localLastLoginTime}</p>
-        <p>当前登录时间（本地时间）: ${localNewLastLoginTime}</p>
+        <p>上次登入時間（本地時間）: ${localLastLoginTime}</p>
+        <p>當前登入時間（本地時間）: ${localNewLastLoginTime}</p>
       `;
     }
 
-    // 绑定按钮点击事件
+    // 綁定按鈕點擊事件
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("register-button").addEventListener("click", googleRegister);
       document.getElementById("login-button").addEventListener("click", googleLogin);
@@ -121,9 +121,9 @@
   </script>
 </head>
 <body>
-  <h1>Firebase Google 登录/注册系统</h1>
-  <button id="register-button">使用 Google 注册</button>
-  <button id="login-button">使用 Google 登录</button>
+  <h1>Firebase Google 登入/註冊系統</h1>
+  <button id="register-button">使用 Google 註冊</button>
+  <button id="login-button">使用 Google 登入</button>
   <div id="user-info"></div>
 </body>
 </html>
