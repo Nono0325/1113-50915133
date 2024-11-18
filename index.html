@@ -1,93 +1,90 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學號儲存與查詢</title>
-    <script type="module">
-        // 引入 Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Google 登录系统</title>
+  <script type="module">
+    // 导入所需的 Firebase 函数
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
 
+    // Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyAScW31exsXbAGyVdPyHkNNTBgEmKv9tKI",
+      authDomain: "nono-4982c.firebaseapp.com",
+      databaseURL: "https://nono-4982c-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "nono-4982c",
+      storageBucket: "nono-4982c.firebasestorage.app",
+      messagingSenderId: "156227944121",
+      appId: "1:156227944121:web:bc5f1c2d5cd733b023a568",
+      measurementId: "G-M5MS866L9E"
+    };
 
-        // Firebase 配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyAScW31exsXbAGyVdPyHkNNTBgEmKv9tKI",
-            authDomain: "nono-4982c.firebaseapp.com",
-            databaseURL: "https://nono-4982c-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "nono-4982c",
-            storageBucket: "nono-4982c.appspot.com",
-            messagingSenderId: "156227944121",
-            appId: "1:156227944121:web:bc5f1c2d5cd733b023a568",
-            measurementId: "G-M5MS866L9E"
-        };
+    // 初始化 Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
 
-        // 初始化 Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    // Google 登录功能
+    async function googleLogin() {
+      const provider = new GoogleAuthProvider();
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const uid = user.uid;
+        const { displayName, email, photoURL } = user;
+        const lastLoginTime = new Date().toISOString();
 
-        // 儲存學號
-        function saveStudentID(studentID) {
-            const studentRef = ref(db, 'students/' + studentID);
-            set(studentRef, {
-                studentID: studentID
-            }).then(() => {
-                alert("學號儲存成功！");
-                document.getElementById('studentIDInput').value = '';  // 清空輸入框
-            }).catch((error) => {
-                alert("儲存學號時出錯: " + error);
+        // 存储用户信息到 Realtime Database
+        const userRef = ref(database, 'users/' + uid);
+        onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            // 用户已存在，更新最后登录时间
+            update(userRef, {
+              lastLoginTime
             });
-        }
-
-        // 查詢學號
-        function getStudentID() {
-            const studentID = document.getElementById('studentIDInput').value;
-            if (studentID.trim() === '') {
-                alert("請輸入學號！");
-                return;
-            }
-
-            const studentRef = ref(db, 'students/' + studentID);
-            get(studentRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const studentData = snapshot.val();
-                    alert("學號 " + studentData.studentID + " 已儲存過！");
-                } else {
-                    alert("找不到此學號的資料！");
-                }
-            }).catch((error) => {
-                alert("查詢學號時出錯: " + error);
+            console.log("登录成功");
+          } else {
+            // 用户不存在，存储用户信息
+            set(userRef, {
+              displayName,
+              email,
+              photoURL,
+              lastLoginTime
             });
-        }
-
-        // 綁定事件
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('saveButton').addEventListener('click', () => {
-                const studentID = document.getElementById('studentIDInput').value;
-                if (studentID.trim() !== '') {
-                    saveStudentID(studentID);
-                } else {
-                    alert("請輸入學號！");
-                }
-            });
-
-            document.getElementById('searchButton').addEventListener('click', getStudentID);
+            console.log("注册成功");
+          }
+          displayUserInfo({ displayName, email, photoURL, lastLoginTime });
         });
-    </script>
+      } catch (error) {
+        console.error("登录失败:", error);
+      }
+    }
+
+    // 显示用户信息
+    function displayUserInfo(userInfo) {
+      const { displayName, email, photoURL, lastLoginTime } = userInfo;
+      document.getElementById("user-info").innerHTML = `
+        <p>姓名: ${displayName}</p>
+        <p>Email: ${email}</p>
+        <img src="${photoURL}" alt="Profile Picture" width="100"/>
+        <p>最后登录时间: ${lastLoginTime}</p>
+      `;
+    }
+
+    // 绑定按钮点击事件
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("login-button").addEventListener("click", googleLogin);
+    });
+  </script>
 </head>
 <body>
-    <h1>學號儲存與查詢</h1>
-    <div>
-        <label for="studentIDInput">學號：</label>
-        <input type="text" id="studentIDInput" placeholder="請輸入學號">
-        <button id="saveButton">儲存學號</button>
-        <button id="searchButton">查詢學號</button>
-    </div>
-
-    <h2>操作說明：</h2>
-    <ul>
-        <li>儲存學號：輸入學號並按下 "儲存學號" 按鈕。</li>
-        <li>查詢學號：輸入學號並按下 "查詢學號" 按鈕。</li>
-    </ul>
+  <h1>Firebase Google 登录系统</h1>
+  <button id="login-button">使用 Google 登录或注册</button>
+  <div id="user-info"></div>
 </body>
 </html>
