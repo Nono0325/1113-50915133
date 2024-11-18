@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Google 登录系统</title>
+  <title>Firebase Google 登录/注册系统</title>
   <script type="module">
-    // 导入所需的 Firebase 函数
+    // 导入 Firebase 函数
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
@@ -29,8 +29,8 @@
     const auth = getAuth(app);
     const database = getDatabase(app);
 
-    // Google 登录功能
-    async function googleLogin() {
+    // Google 注册功能
+    async function googleRegister() {
       const provider = new GoogleAuthProvider();
       try {
         const result = await signInWithPopup(auth, provider);
@@ -39,34 +39,54 @@
         const { displayName, email, photoURL } = user;
         const lastLoginTime = new Date().toISOString();
 
-        // 存储用户信息到 Realtime Database
         const userRef = ref(database, 'users/' + uid);
         onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
-            // 用户已存在，更新最后登录时间
-            update(userRef, {
-              lastLoginTime
-            });
-            console.log("登录成功");
+            alert("用户已注册！");
           } else {
-            // 用户不存在，存储用户信息
+            // 存储新用户信息
             set(userRef, {
               displayName,
               email,
               photoURL,
               lastLoginTime
             });
-            console.log("注册成功");
+            displayUserInfo({ displayName, email, photoURL, lastLoginTime });
+            alert("注册成功！");
           }
-          // 转换最后登录时间为本地时间并显示
-          displayUserInfo({ displayName, email, photoURL, lastLoginTime });
+        });
+      } catch (error) {
+        console.error("注册失败:", error);
+      }
+    }
+
+    // Google 登录功能
+    async function googleLogin() {
+      const provider = new GoogleAuthProvider();
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const uid = user.uid;
+        const lastLoginTime = new Date().toISOString();
+
+        // 检查用户是否已存在
+        const userRef = ref(database, 'users/' + uid);
+        onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            // 更新最后登录时间
+            update(userRef, { lastLoginTime });
+            const { displayName, email, photoURL } = snapshot.val();
+            displayUserInfo({ displayName, email, photoURL, lastLoginTime });
+          } else {
+            alert("用户未注册，请先注册！");
+          }
         });
       } catch (error) {
         console.error("登录失败:", error);
       }
     }
 
-    // 显示用户信息，格式化最后登录时间为本地时间
+    // 显示用户信息
     function displayUserInfo(userInfo) {
       const { displayName, email, photoURL, lastLoginTime } = userInfo;
       const localLastLoginTime = new Date(lastLoginTime).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
@@ -81,13 +101,15 @@
 
     // 绑定按钮点击事件
     document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("register-button").addEventListener("click", googleRegister);
       document.getElementById("login-button").addEventListener("click", googleLogin);
     });
   </script>
 </head>
 <body>
-  <h1>Firebase Google 登录系统</h1>
-  <button id="login-button">使用 Google 登录或注册</button>
+  <h1>Firebase Google 登录/注册系统</h1>
+  <button id="register-button">使用 Google 注册</button>
+  <button id="login-button">使用 Google 登录</button>
   <div id="user-info"></div>
 </body>
 </html>
